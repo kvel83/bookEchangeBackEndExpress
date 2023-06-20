@@ -6,8 +6,6 @@ const checkDuplicateUsername = (req, res, next) => {
   User.findOne({ userName: req.body.userName })
     .exec()
     .then((user) => {
-      console.log("usuario en verificar nombre de usuario: ",user);
-      console.log("nombre de usuario en req:" , req.body.userName);
       if (user) {
         return res.status(400).send({ message: "Failed! Username is already in use!" });
       }
@@ -25,16 +23,6 @@ const checkRolesExisted = (req, res, next) => {
       message:`Failed! Role ${req.body.role} does not exist!`
      });
   }
-
-  // if (req.body.role) {
-    // req.body.role.forEach(rol => {
-        // if(!ROLES.includes(rol)){
-            // res.status(400).send({
-                // message:`Failed! Role ${rol} does not exist!`
-            // });
-        // }
-    // });
-
   next();
 };
 

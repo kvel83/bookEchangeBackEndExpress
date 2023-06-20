@@ -13,19 +13,6 @@ const Role = db.role;
 
 // const dbConfig = require('./app/config/db.config');
 
-db.mongoose
-  .connect(`mongodb://${process.env.HOST}:${process.env.PORT}/${process.env.DB}`, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  .then(() => {
-    console.log("Successfully connect to MongoDB.");
-    initial();
-  })
-  .catch(err => {
-    console.error("Connection error", err);
-    // process.exit();
-  });
 
 let corsOptions = {
   origin: ["http://localhost:3000", "http://localhost:5173"],
@@ -51,9 +38,26 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerDocument)
 );
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
-});
+
+if (process.env.NODE_ENV !== 'test') {
+  db.mongoose
+    .connect(`mongodb://${process.env.HOST}:${process.env.PORT}/${process.env.DB}`, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    })
+    .then(() => {
+      console.log("Successfully connect to MongoDB.");
+      initial();
+    })
+    .catch(err => {
+      console.error("Connection error", err);
+      // process.exit();
+    });
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}.`);
+    });
+};
+
 
 async function initial() {
   try {
@@ -62,11 +66,11 @@ async function initial() {
       await Promise.all([
         new Role({
           name: "user",
-          type: 2
+          type: '2'
         }).save(),
         new Role({
           name: "admin",
-          type: 1
+          type: '1'
         }).save()
       ]);
       console.log("Added 'user' and 'admin' to roles collection");

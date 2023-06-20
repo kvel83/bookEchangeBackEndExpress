@@ -1,27 +1,28 @@
 require('dotenv').config();
-// const config = require("../config/auth.config");
-const db = require("../models");
-const User = db.user;
-const Role = db.role;
+const User = require('../models/user.model');
+const Role = require('../models/role.model');
 
 let jwt = require("jsonwebtoken");
 let bcrypt = require("bcryptjs");
 
 exports.signup = async(req, res) => {
     try {
-        console.log("peticion a signup: ",req);
         let roleName;
-        if(req.body.role === 1){
+        if(req.body.role === '1'){
             roleName = 'admin';
-        }else if(req.body.role === 2){
+        }else if(req.body.role === '2'){
             roleName = 'user';
         }else{
             return res.status(400).send({message: "Invalid role type"});
-        };
+        }
+        console.log("rolename en auth.controller: ",roleName);
+
         const role = await Role.findOne({name: roleName});
+        console.log("role en auth.controller: ",role);
         if (!role){
             return res.status(500).send({message: "Role ${roleName} not found"});
-        };
+        }
+
         const user = new User({
             userName: req.body.userName,
             userEmail: req.body.userEmail,
@@ -29,19 +30,18 @@ exports.signup = async(req, res) => {
             userAge: req.body.userAge,
             role: req.body.role
           });
-          console.log("usuario a registrar: ", user);
-          await user.save();
-          res.status(200).send(user);
+
+        await user.save();
+        console.log("usuario antes de guardarlo: ",user);
+        res.status(200).send(user);
     } catch (error) {
-        return res.status(500).send({message: error.message});
+        return res.status(500).json({message: error.message});
     }
   };
 
   exports.signin = async (req, res) => {
     try {
-        console.log("userName en signin: ", req.body.userName);
         const user = await User.findOne({ userName: req.body.userName }).exec();
-        console.log("usuario en signin: ", user);
 
         if (!user) {
             return res.status(404).send({ message: "User Not found." });
@@ -74,6 +74,7 @@ exports.signup = async(req, res) => {
         role: roleData, // Enviar la copia del objeto role
         accessToken: token
       });
+      console.log(res.json());
     } catch (err) {
       res.status(500).send({ message: err.message });
     }

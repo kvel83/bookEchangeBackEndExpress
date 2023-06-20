@@ -77,10 +77,6 @@ exports.updateBook = async(req,res) => {
 exports.addBook = async(req, res) => {
     const id = req.params.id;
     const user = await User.findById(id).exec();
-    console.log(id);
-    console.log(user);
-    console.log(req.body.bookISBN);
-    console.log(req.body);
     let book = await Book.findOne({bookISBN: req.body.bookISBN}).exec();
     try {
         if (!book){
@@ -103,8 +99,6 @@ exports.addBook = async(req, res) => {
                     books: user.books
                 }
             });
-            console.log(updateResult.modifiedCount);
-            console.log(updateResult);
         if (updateResult.modifiedCount === 1){
             res.status(200).send({message: "Libro insertado correctamente"});
         }else{
@@ -119,19 +113,14 @@ exports.addBook = async(req, res) => {
 exports.deleteBook = async (req, res) => {
   const id = req.params.id;
   const bookISBN = req.body.bookISBN;
-  console.log(req.body);
-
 
   try {
     const book = await Book.findOne({ bookISBN });
-    console.log("libro en delete: ",book);
     if (!book) {
       return res.status(404).json({ message: 'El libro no fue encontrado.' });
     }
 
     const bookId = book._id.toString();
-    console.log("id en delete book: ", id);
-    console.log("bookId en delete book: ", bookId);
 
     const user = await User.findByIdAndUpdate(
       id,
@@ -143,8 +132,6 @@ exports.deleteBook = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'El usuario no fue encontrado.' });
     }
-
-    console.log("Usuario actualizado: ", user);
 
     res.status(200).json({ books: user.books });
   } catch (error) {
