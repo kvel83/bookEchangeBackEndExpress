@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  app:
+    container_name: bookExchangeBackEndB_test
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./app/test:/app/tests
+    command: npm run test
+    depends_on:
+      - mongo
+
+  mongo:
+    container_name: mongoBookExchangeBBDD_test
+    image: mongo
+    ports:
+      - "27017:27017"

@@ -1,0 +1,231 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "BooksExchange API",
+        "description": "BooksExchange API",
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "host": "localhost:3000",
+    "basePath": "/",
+    "tags": [{
+        "name": "Autenticacion",
+        "description": "Api para autenticación y registro de usuarios"
+    }],
+    "definitions": {
+        "RoleModel":{
+            "required": ["name","type"],
+            "properties":{
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "number"
+                }
+            }
+        },
+        "UserModel": {
+            "required": ["userName", "userEmail", "userPassword", "userAge", "role"],
+            "properties": {
+                "userName": {
+                    "type": "string",
+                    "uniqueItems": true
+                },
+                "userEmail": {
+                    "type": "string"
+                },
+                "userPassword": {
+                    "type": "string"
+                },
+                "userAge": {
+                    "type": "number"
+                },
+                "role": {
+                    "type": "number"
+                }
+            }
+        },
+        "Users": {
+            "type": "object",
+            "$ref": "#/definitions/UserModel"
+        }
+    },
+
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "in": "header",
+                "name": "Authorization",
+                "description": "Bearer token to access these api endpoints",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    },
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+
+    "schemes": ["http"],
+    "consumes": ["application/json"],
+    "produces": ["application/json"],
+    "paths": {
+        "/api/auth/signup": {
+            "post": {
+                "tags": ["SignUp"],
+                "description": "Registro de un nuevo usuario",
+                "parameters": [{
+                    "name": "user",
+                    "in": "body",
+                    "description": "Usuario",
+                    "required": true,
+                    "schema": {
+                        "$ref": "#/definitions/UserModel"
+                    }
+                }],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Nuevo usuario es registrado",
+                        "schema": {
+                            "$ref": "#/definitions/UserModel"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/signin": {
+            "post": {
+                "tags": ["SignIn"],
+                "description": "Login de un usuario",
+                "parameters": [{
+                    "name": "x-access-token",
+                    "in": "header",
+                    "description": "AccessToken",
+                    "required": true
+                },{
+                    "name": "user",
+                    "in": "body",
+                    "description": "Usuario",
+                    "required": true,
+                    "properties":{
+                        "userName": {
+                            "type": "string",
+                            "uniqueItems": true
+                        },
+                        "userPassword": {
+                            "type": "string"
+                        }
+                    }
+                }],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Nuevo usuario es registrado",
+                        "schema": {
+                            "$ref": "#/definitions/UserModel"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/test/all":{
+            "get": {
+                "tags": ["AllAccess"],
+                "description": "Acceso AllAccess",
+                "parameters": [{
+                    "name": "x-access-token",
+                    "in": "header",
+                    "description": "AccessToken",
+                    "required": true
+                },{
+                    "name": "user",
+                    "in": "path",
+                    "description": "Usuario",
+                    "required": true
+                },{
+                    "name": "pass",
+                    "in": "path",
+                    "description": "Password",
+                    "required": true
+                }],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Nuevo usuario es registrado",
+                        "schema": {
+                            "$ref": "#/definitions/UserModel"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/test/user":{
+            "get": {
+                "tags": ["UserAccess"],
+                "description": "Acceso UserAccess",
+                "parameters": [{
+                    "name": "x-access-token",
+                    "in": "header",
+                    "description": "AccessToken",
+                    "required": true
+                },{
+                    "name": "user",
+                    "in": "path",
+                    "description": "Usuario",
+                    "required": true
+                },{
+                    "name": "pass",
+                    "in": "path",
+                    "description": "Password",
+                    "required": true
+                }],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Nuevo usuario es registrado",
+                        "schema": {
+                            "$ref": "#/definitions/UserModel"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/test/admin":{
+            "get": {
+                "tags": ["AdminAccess"],
+                "description": "Acceso AdminAccess",
+                "parameters": [{
+                    "name": "x-access-token",
+                    "in": "header",
+                    "description": "AccessToken",
+                    "required": true
+                },{
+                    "name": "user",
+                    "in": "path",
+                    "description": "Usuario",
+                    "required": true
+                },{
+                    "name": "pass",
+                    "in": "path",
+                    "description": "Password",
+                    "required": true
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Nuevo usuario es registrado",
+                        "schema": {
+                            "$ref": "#/definitions/UserModel"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
