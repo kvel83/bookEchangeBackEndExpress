@@ -13,7 +13,8 @@ exports.getAllBooksByUser = async(req, res) => {
             res.status(404).send({message: "Usuario no encontrado"});
         }else{
             const books = user.books;
-            if (books){
+            console.log("books en userBooks: ", books.length);
+            if (books.length > 0){
                 res.status(200).send(books);
             }else{
                 res.status(400).send({message: "Usuario no tiene ningún libro"});
@@ -74,41 +75,47 @@ exports.updateBook = async(req,res) => {
     }
 }
 
-exports.addBook = async(req, res) => {
+exports.addBook = async (req, res) => {
     const id = req.params.id;
-    const user = await User.findById(id).exec();
-    let book = await Book.findOne({bookISBN: req.body.bookISBN}).exec();
+    const user = await User.findById(id).exec();;
+    let book = await Book.findOne({ bookISBN: req.body.bookISBN });
     try {
-        if (!book){
+        if (book === null) {
             book = new Book({
-                bookName: req.body.bookName,
-                bookAuthor: req.body.bookAuthor,
-                bookEditorial: req.body.bookEditorial,
-                bookPages: req.body.bookPages,
-                bookClasification: req.body.bookClasification,
-                bookISBN: req.body.bookISBN,
-                bookDescription: req.body.bookDescription
+            bookName: req.body.bookName,
+            bookAuthor: req.body.bookAuthor,
+            bookEditorial: req.body.bookEditorial,
+            bookPages: req.body.bookPages,
+            bookClasification: req.body.bookClasification,
+            bookISBN: req.body.bookISBN,
+            bookDescription: req.body.bookDescription,
             });
             await book.save();
         }
         user.books.push(book._id);
-        const updateResult = User.updateOne(
-            { _id: id},
-            { $set:
-                {
-                    books: user.books
-                }
-            });
-        if (updateResult.modifiedCount === 1){
-            res.status(200).send({message: "Libro insertado correctamente"});
-        }else{
-            res.status(404).send({message: "Libro no encontrado"});
+        const updateResult = await user.save();
+        if (updateResult) {
+          res.status(200).send({ message: "Libro insertado correctamente" });
+        } else {
+          res.status(404).send({ message: "Error al insertar el libro en el usuario" });
         }
-
+    //   const updateResult = await User.updateOne(
+        // { _id: id },
+        // {
+        //   $set: {
+            // books: user.books,
+        //   },
+        // }
+    //   );
+    //   if (updateResult.modifiedCount === 1) {
+        // res.status(200).send({ message: "Libro insertado correctamente" });
+    //   } else {
+        // res.status(404).send({ message: "Libro no encontrado" });
+    //   }
     } catch (error) {
-        return res.status(500).send({message: error.message});
+      return res.status(500).send({ message: error.message });
     }
-};
+  };
 
 exports.deleteBook = async (req, res) => {
   const id = req.params.id;

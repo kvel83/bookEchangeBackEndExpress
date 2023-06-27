@@ -11,9 +11,6 @@ app.use(express.json());
 const db = require('./app/models');
 const Role = db.role;
 
-// const dbConfig = require('./app/config/db.config');
-
-
 let corsOptions = {
   origin: ["http://localhost:3000", "http://localhost:5173"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
@@ -51,7 +48,6 @@ if (process.env.NODE_ENV !== 'test') {
     })
     .catch(err => {
       console.error("Connection error", err);
-      // process.exit();
     });
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}.`);

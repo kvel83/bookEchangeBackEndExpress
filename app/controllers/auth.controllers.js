@@ -15,10 +15,8 @@ exports.signup = async(req, res) => {
         }else{
             return res.status(400).send({message: "Invalid role type"});
         }
-        console.log("rolename en auth.controller: ",roleName);
 
         const role = await Role.findOne({name: roleName});
-        console.log("role en auth.controller: ",role);
         if (!role){
             return res.status(500).send({message: "Role ${roleName} not found"});
         }
@@ -32,7 +30,6 @@ exports.signup = async(req, res) => {
           });
 
         await user.save();
-        console.log("usuario antes de guardarlo: ",user);
         res.status(200).send(user);
     } catch (error) {
         return res.status(500).json({message: error.message});
@@ -74,7 +71,6 @@ exports.signup = async(req, res) => {
         role: roleData, // Enviar la copia del objeto role
         accessToken: token
       });
-      console.log(res.json());
     } catch (err) {
       res.status(500).send({ message: err.message });
     }

@@ -7,9 +7,7 @@ const User = mongoose.model(
     userEmail: String,
     userPassword: String,
     userAge: Number,
-    role:{
-        type: Number
-    },
+    role: String,
     books: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Book"

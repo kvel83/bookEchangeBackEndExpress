@@ -1,11 +1,14 @@
 const dummyData = require('../../config/testData');
 const dummyInsertUsers = require('../../config/testUsersSigIn');
 const dummyRol = require('../../config/roleTest');
+const dummyBook = require('../../config/testBook');
 const request = require('supertest');
+const jwt = require('jsonwebtoken');
 const app = require('../../../server');
 const dbConnection = require('../test-db-config');
 const User = require('../../models/user.model');
 const Role = require('../../models/role.model');
+const Book = require('../../models/book.model')
 
 beforeAll(async () => {
   await dbConnection.connect();
@@ -45,20 +48,16 @@ describe('Pruebas sobre API de autorización y registro', () => {
         expect(rol2.name).toBe(dummyRol.rolUser.name);
     });
     describe('POST /api/auth/signup', () => {
-        // it('Ruta funcionando', async () => {
-            // const response = await request(app).post('/api/auth/signup').send(dummyInsertUsers.newUser);
-            // console.log(response.status);
-            // console.log(response.body);
-            // console.log(response.headers);
-            // expect(response.status).toBe(200);
-            // expect(response.headers['content-type']).toContain('json');
-        // }, 20000);
+        it('Ruta funcionando', async () => {
+            const response = await request(app).post('/api/auth/signup').send(dummyInsertUsers.newUser);
+            expect(response.status).toBe(200);
+            expect(response.headers['content-type']).toContain('json');
+        }, 20000);
 
         it('Insercion exitosa de nuevo usuario', async () => {
             const response = await request(app).post('/api/auth/signup').send(dummyInsertUsers.newUserInsert);
-            console.log(response);
             expect(response.body.userName).toBeDefined();
-            expect(response.body.userName).toBe(dummyData.newUserInsert.userName);
+            expect(response.body.userName).toBe(dummyInsertUsers.newUserInsert.userName);
         }, 20000);
 
 
@@ -66,16 +65,16 @@ describe('Pruebas sobre API de autorización y registro', () => {
 
     describe('POST /api/auth/signin', () => {
         it('Ruta funcionando', async () => {
-            const response = await request(app).post('/api/auth/signin').send(dummyData.testLogin);
+            const response = await request(app).post('/api/auth/signin').send(dummyInsertUsers.newUserInsert);
             expect(response.status).toBe(200);
             expect(response.headers['content-type']).toContain('json');
         }, 20000);
 
         it('Login exitoso', async () => {
-            const response = await request(app).post('/api/auth/signin').send(dummyData.testLogin);
+            const response = await request(app).post('/api/auth/signin').send(dummyInsertUsers.newUserInsert);
             expect(response.body.id).toBeDefined();
             expect(response.body.accessToken).toBeDefined();
-            expect(response.body.userName).toBe(dummyData.testLogin.userName);
+            expect(response.body.userName).toBe(dummyInsertUsers.newUserInsert.userName);
         }, 20000);
 
         it('Login incorrecto por password', async () => {
@@ -84,3 +83,86 @@ describe('Pruebas sobre API de autorización y registro', () => {
         }, 20000);
     });
 });
+
+describe('Pruebas sobre API de libros de los usuarios', () => {
+
+    describe('POST /api/userBook/addBook/:id', () => {
+        it('Verifica la inserción correcta de un libro para un usuario', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).post(`/api/userBook/addBook/${user.id}`).set('Authorization', `Bearer ${token}`).send(dummyBook.testBook);
+            expect(response.status).toBe(200);
+            expect(response.body).toBeDefined();
+        });
+        it('Verifica error 404', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).post(`/api/userBook/addBoo/${user.id}`).set
+        ('Authorization', `Bearer ${token}`).send(dummyBook.testBook);
+            expect(response.status).toBe(404);
+        });
+    });
+    describe('GET /api/userBook/getAllBooks/:id', () => {
+        it('Verifica que trae el arreglo con los ID`s de los libros de un usuario', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).get(`/api/userBook/getAllBooks/${user.id}`).set
+            ('Authorization', `Bearer ${token}`).send();
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Array);
+        });
+        it('Verifica error 404', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).get(`/api/userBook/getAllBook/${user.id}`).set
+            ('Authorization', `Bearer ${token}`).send();
+            expect(response.status).toBe(404);
+        });
+        it('Verifica estado 400', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUserInsert.userName });
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).get(`/api/userBook/getAllBooks/${user.id}`).set
+            ('Authorization', `Bearer ${token}`).send();
+            expect(response.status).toBe(400);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+    });
+    describe('GET /api/userBook/getBookById/:id', () => {
+        it('Obtiene la descripción de un libro', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const book = await Book.findOne({bookName: dummyBook.testBook.bookName});
+            console.log("libro obtenido en el test: ", book._id.toString());
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).get(`/api/userBook/getBookById/${user.id}`).set
+            ('Authorization', `Bearer ${token}`).send({_id: book._id.toString()});
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+        it('Valida error 404', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const book = await Book.findOne({bookName: dummyBook.testBook.bookName});
+            console.log("libro obtenido en el test: ", book._id.toString());
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).get(`/api/userBook/getBookByI/${user.id}`).set
+            ('Authorization', `Bearer ${token}`).send({_id: book._id.toString()});
+            expect(response.status).toBe(404);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+        it('Valida error 400', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const book = await Book.findOne({bookName: dummyBook.testBook.bookName});
+            console.log("libro obtenido en el test: ", book._id.toString());
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).get(`/api/userBook/getBookById/${user.id}`).set
+            ('Authorization', `Bearer ${token}`).send({});
+            expect(response.status).toBe(400);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+    });
+
+    describe('GET /api/userBook/getBookById/:id', () => {
+        it('Verifica la eliminación de un libro de un usuario', async() => {
+
+        });
+    });
+})
