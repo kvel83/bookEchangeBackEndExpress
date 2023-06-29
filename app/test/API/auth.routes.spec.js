@@ -16,15 +16,16 @@ beforeAll(async () => {
   await Promise.all([
     User.create(dummyData.testLogin),
     User.create(dummyData.wrongTestLoginPass),
-    User.create(dummyData.wrongTestLoginUser),
     User.create(dummyData.wrongUser),
+    User.create(dummyInsertUsers.newUserAdmin),
     Role.create(dummyRol.rolAdmin),
     Role.create(dummyRol.rolUser),
   ]);
 });
 
 afterAll(async () => {
-  await dbConnection.closeDatabase();
+    await dbConnection.clearDatabase()
+    await dbConnection.closeDatabase();
 });
 
 describe('Pruebas sobre API de autorización y registro', () => {
@@ -60,6 +61,13 @@ describe('Pruebas sobre API de autorización y registro', () => {
             expect(response.body.userName).toBe(dummyInsertUsers.newUserInsert.userName);
         }, 20000);
 
+        it ('Rol incorrecto', async () => {
+            const response = await request(app).post('/api/auth/signup').send(dummyInsertUsers.newUserBadRole);
+            expect(response.status).toBe(400);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body.message).toContain('Failed!')
+        });
+
 
     });
 
@@ -81,6 +89,13 @@ describe('Pruebas sobre API de autorización y registro', () => {
             const response = await request(app).post('/api/auth/signin').send(dummyData.wrongTestLoginPass);
             expect(response.body.accessToken).toBeNull();
         }, 20000);
+
+        it('Login incorrecto por usuario', async () => {
+            const response = await request(app).post('/api/auth/signin').send(dummyData.wrongTestLoginUser);
+            expect(response.status).toBe(404);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body.message).toBe('User Not found.')
+        })
     });
 });
 
@@ -101,6 +116,24 @@ describe('Pruebas sobre API de libros de los usuarios', () => {
         ('Authorization', `Bearer ${token}`).send(dummyBook.testBook);
             expect(response.status).toBe(404);
         });
+        it('Verifica error por token erroneo', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const token = '';
+            const response = await request(app).post(`/api/userBook/addBook/${user.id}`).set
+            ('Authorization', `Bearer ${token}`).send(dummyBook.testBook);
+            expect(response.status).toBe(401);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body.message).toBeDefined();
+        })
+        it('Verifica error por falta de token', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const response = await request(app).post(`/api/userBook/addBook/${user.id}`).set
+            ('Authorization','').send(dummyBook.testBook);
+
+            expect(response.status).toBe(403);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body.message).toBeDefined();
+        })
     });
     describe('GET /api/userBook/getAllBooks/:id', () => {
         it('Verifica que trae el arreglo con los ID`s de los libros de un usuario', async() => {
@@ -131,17 +164,15 @@ describe('Pruebas sobre API de libros de los usuarios', () => {
         it('Obtiene la descripción de un libro', async() => {
             const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
             const book = await Book.findOne({bookName: dummyBook.testBook.bookName});
-            console.log("libro obtenido en el test: ", book._id.toString());
             const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
-            const response = await request(app).get(`/api/userBook/getBookById/${user.id}`).set
-            ('Authorization', `Bearer ${token}`).send({_id: book._id.toString()});
+            const response = await request(app).get(`/api/userBook/getBookById/${book._id}`).set
+            ('Authorization', `Bearer ${token}`).send();
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);
         });
         it('Valida error 404', async() => {
             const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
             const book = await Book.findOne({bookName: dummyBook.testBook.bookName});
-            console.log("libro obtenido en el test: ", book._id.toString());
             const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
             const response = await request(app).get(`/api/userBook/getBookByI/${user.id}`).set
             ('Authorization', `Bearer ${token}`).send({_id: book._id.toString()});
@@ -151,7 +182,6 @@ describe('Pruebas sobre API de libros de los usuarios', () => {
         it('Valida error 400', async() => {
             const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
             const book = await Book.findOne({bookName: dummyBook.testBook.bookName});
-            console.log("libro obtenido en el test: ", book._id.toString());
             const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
             const response = await request(app).get(`/api/userBook/getBookById/${user.id}`).set
             ('Authorization', `Bearer ${token}`).send({});
@@ -160,9 +190,82 @@ describe('Pruebas sobre API de libros de los usuarios', () => {
         });
     });
 
-    describe('GET /api/userBook/getBookById/:id', () => {
+    describe('GET /api/userBook/deleteBook/:id', () => {
         it('Verifica la eliminación de un libro de un usuario', async() => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const book = await Book.findOne({bookISBN: dummyBook.testBook.bookISBN});
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).delete(`/api/userBook/deleteBook/${user.id}`).set
+            ('Authorization', `Bearer ${token}`).send({bookISBN: book.bookISBN});
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        });
 
+        it('Verifica error 404', async () => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const book = await Book.findOne({bookISBN: '123'});
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).delete(`/api/userBook/deleteBook/${user.id}`).set
+            ('Authorization', `Bearer ${token}`).send({bookISBN: '123'});
+            expect(response.status).toBe(404);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body.message).toBeDefined();
+        })
+
+        it('Verifica error usuario no encontrado', async() => {
+            const book = await Book.findOne({bookISBN: dummyBook.testBook.bookISBN});
+            const response = await request(app).delete(`/api/userBook/deleteBook/123`).set
+            ('Authorization', `Bearer askduyiuwqyqo`).send({bookISBN: dummyBook.testBook.bookISBN});
+            expect(response.status).toBe(401);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body.message).toBeDefined();
         });
     });
+})
+
+describe ('Pruebas sobre user.controller', () => {
+    describe('GET /api/test/all', () => {
+        it('Acceso contenido publico', async () => {
+            const response = await request(app).get(`/api/test/all`).send();
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        })
+    });
+    describe ('GET /api/test/user', () => {
+        it('Acceso contenido usuario', async () => {
+            const user = await User.findOne({ userName: dummyInsertUsers.newUser.userName });
+            const token = jwt.sign({id: user.id }, process.env.JWT_SECRET, {expiresIn: '2h'});
+            const response = await request(app).get(`/api/test/user`).set
+            ('Authorization', `Bearer ${token}`).send();
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+    })
+})
+
+describe('Pruebas sobre Server.js', () => {
+    it('Prueba de ruta raiz', async () => {
+        const response = await request(app).get(`/`).send();
+        console.log(response.body);
+        expect(response.status).toBe(200);
+        expect(response.body).toBeInstanceOf(Object);
+    })
+})
+
+describe('Pruebas sobre funcion initial', () => {
+    beforeEach(async () => {
+        await Role.deleteMany({});
+    });
+    it('Prueba de insercion de roles correcta', async () => {
+        await app.initial();
+
+        const roles = await Role.find({});
+        expect(roles).toHaveLength(2);
+
+        const userRole = roles.find(role => role.name === 'user');
+        expect(userRole).toBeDefined();
+
+        const adminRole = roles.find(role => role.name === 'admin');
+        expect(adminRole).toBeDefined();
+    })
 })

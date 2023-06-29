@@ -76,4 +76,6 @@ async function initial() {
   }
 };
 
+app.initial = initial;
+
 module.exports = app;

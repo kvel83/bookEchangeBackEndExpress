@@ -26,8 +26,7 @@ exports.getAllBooksByUser = async(req, res) => {
 };
 
 exports.getBookById = async(req,res) => {
-    const id = req.params.id;
-    const bookId = req.body._id;
+    const bookId = req.params.id;
     try {
         if (bookId){
             const book = await Book.findById(bookId);
@@ -44,40 +43,40 @@ exports.getBookById = async(req,res) => {
     };
 };
 
-exports.updateBook = async(req,res) => {
-    const bookId = req.params._id;
-    try {
-        if(bookId){
-            await Book.updateOne(
-                { _id: bookId },
-                { $set: {
-                    bookName: req.body.bookName,
-                    bookAuthor: req.body.bookAuthor,
-                    bookEditorial: req.body.bookEditorial,
-                    bookPages: req.body.bookPages,
-                    bookClasification: req.body.bookClasification,
-                    bookISBN: req.body.bookISBN,
-                    bookDescription: req.body.bookDescription,
-                }}
-            )
-            .exec((err, book) => {
-                if (err){
-                    res.status(500).json({ message: "Error en la actualizacion del libro " + err.message });
-                }else{
-                    res.status(200).json(book);
-                }
-            });
-        }else{
-            res.status(400).json({ message: "Se necesita un ID de libro válido"})
-        }
-    } catch (error) {
-        res.status(500).json({ message: "Error de conexión al seridor" })
-    }
-}
+// exports.updateBook = async(req,res) => {
+    // const bookId = req.params._id;
+    // try {
+        // if(bookId){
+            // await Book.updateOne(
+                // { _id: bookId },
+                // { $set: {
+                    // bookName: req.body.bookName,
+                    // bookAuthor: req.body.bookAuthor,
+                    // bookEditorial: req.body.bookEditorial,
+                    // bookPages: req.body.bookPages,
+                    // bookClasification: req.body.bookClasification,
+                    // bookISBN: req.body.bookISBN,
+                    // bookDescription: req.body.bookDescription,
+                // }}
+            // )
+            // .exec((err, book) => {
+                // if (err){
+                    // res.status(500).json({ message: "Error en la actualizacion del libro " + err.message });
+                // }else{
+                    // res.status(200).json(book);
+                // }
+            // });
+        // }else{
+            // res.status(400).json({ message: "Se necesita un ID de libro válido"})
+        // }
+    // } catch (error) {
+        // res.status(500).json({ message: "Error de conexión al seridor" })
+    // }
+// }
 
 exports.addBook = async (req, res) => {
     const id = req.params.id;
-    const user = await User.findById(id).exec();;
+    const user = await User.findById(id).exec();
     let book = await Book.findOne({ bookISBN: req.body.bookISBN });
     try {
         if (book === null) {
@@ -94,24 +93,12 @@ exports.addBook = async (req, res) => {
         }
         user.books.push(book._id);
         const updateResult = await user.save();
+        console.log("libros de usuario en addBook: ", user.books);
         if (updateResult) {
-          res.status(200).send({ message: "Libro insertado correctamente" });
+          res.status(200).send({ books: user.books });
         } else {
           res.status(404).send({ message: "Error al insertar el libro en el usuario" });
         }
-    //   const updateResult = await User.updateOne(
-        // { _id: id },
-        // {
-        //   $set: {
-            // books: user.books,
-        //   },
-        // }
-    //   );
-    //   if (updateResult.modifiedCount === 1) {
-        // res.status(200).send({ message: "Libro insertado correctamente" });
-    //   } else {
-        // res.status(404).send({ message: "Libro no encontrado" });
-    //   }
     } catch (error) {
       return res.status(500).send({ message: error.message });
     }
@@ -119,10 +106,14 @@ exports.addBook = async (req, res) => {
 
 exports.deleteBook = async (req, res) => {
   const id = req.params.id;
+  console.log("id en deleteBook: ", id);
   const bookISBN = req.body.bookISBN;
+  console.log("bookISBN en deleteBook: ",bookISBN);
+  console.log("req.body en deleteBook: ",req.body.bookISBN);
 
   try {
-    const book = await Book.findOne({ bookISBN });
+    const book = await Book.findOne({ bookISBN: bookISBN });
+    console.log("Libro en deleteBook: ", book);
     if (!book) {
       return res.status(404).json({ message: 'El libro no fue encontrado.' });
     }
@@ -135,9 +126,10 @@ exports.deleteBook = async (req, res) => {
       { new: true }
     ).populate("books")
     .exec();
+    console.log("usuario en deleteBook: ", user)
 
     if (!user) {
-      return res.status(404).json({ message: 'El usuario no fue encontrado.' });
+      return res.status(401).json({ message: 'El usuario no fue encontrado.' });
     }
 
     res.status(200).json({ books: user.books });

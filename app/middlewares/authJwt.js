@@ -6,6 +6,7 @@ const User = db.user;
 const Role = db.role;
 
 verifyToken = (req, res, next) => {
+  console.log(req.headers);
   let token = req.headers["authorization"].replace(/^Bearer\s+/,"");
 
   if (!token) {
@@ -21,36 +22,7 @@ verifyToken = (req, res, next) => {
   });
 };
 
-const isAdmin = (req, res, next) => {
-  User.findById(req.userId).exec((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
-
-    Role.find(
-      {
-        _id: { $in: user.roles }
-      },
-      (err, roles) => {
-        if (err) {
-          res.status(500).send({ message: err });
-          return;
-        }
-
-        roles.forEach(rol => {
-            if(rol === 'admin'){
-                next();
-            }
-        });
-        res.status(403).send({ message: "Require Admin Role!" });
-      }
-    );
-  });
-};
-
 const authJwt = {
-  verifyToken,
-  isAdmin
+  verifyToken
 };
 module.exports = authJwt;

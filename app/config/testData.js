@@ -7,7 +7,7 @@ const wrongTestLoginPass = {
     userPassword: "Qwerty11."
 };
 const wrongTestLoginUser = {
-    userName: "user33",
+    userName: "juanito",
     userPassword: "Qwerty03."
 }
 const wrongUser = {

@@ -11,14 +11,20 @@
     },
     "host": "localhost:3000",
     "basePath": "/",
-    "tags": [{
-        "name": "Autenticacion",
-        "description": "Api para autenticación y registro de usuarios"
-    }],
+    "tags": [
+        {
+            "name": "Autenticacion",
+            "description": "Api para autenticación y registro de usuarios"
+        },
+        {
+            "name": "Books by user",
+            "description": "Api para relacionar libros con cada usuario y sus operaciones sobre los mismos"
+        }
+    ],
     "definitions": {
-        "RoleModel":{
-            "required": ["name","type"],
-            "properties":{
+        "RoleModel": {
+            "required": ["name", "type"],
+            "properties": {
                 "name": {
                     "type": "string"
                 },
@@ -51,9 +57,34 @@
         "Users": {
             "type": "object",
             "$ref": "#/definitions/UserModel"
+        },
+        "Books": {
+            "required": ["bookName", "bookAuthor", "bookEditorial", "bookPages", "bookClasification", "bookISBN", "bookDescription"],
+            "properties": {
+                "bookName": {
+                    "type": "string"
+                },
+                "bookAuthor": {
+                    "type": "string"
+                },
+                "bookEditorial": {
+                    "type": "string"
+                },
+                "bookPages": {
+                    "type": "number"
+                },
+                "bookClasification": {
+                    "type": "string"
+                },
+                "bookISBN": {
+                    "type": "string"
+                },
+                "bookDescription": {
+                    "type": "string"
+                }
+            }
         }
     },
-
     "components": {
         "securitySchemes": {
             "bearerAuth": {
@@ -71,24 +102,25 @@
             "bearerAuth": []
         }
     ],
-
     "schemes": ["http"],
     "consumes": ["application/json"],
     "produces": ["application/json"],
     "paths": {
         "/api/auth/signup": {
             "post": {
-                "tags": ["SignUp"],
+                "tags": ["Autenticacion"],
                 "description": "Registro de un nuevo usuario",
-                "parameters": [{
-                    "name": "user",
-                    "in": "body",
-                    "description": "Usuario",
-                    "required": true,
-                    "schema": {
-                        "$ref": "#/definitions/UserModel"
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "body",
+                        "description": "Usuario",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UserModel"
+                        }
                     }
-                }],
+                ],
                 "produces": ["application/json"],
                 "responses": {
                     "200": {
@@ -102,28 +134,25 @@
         },
         "/api/auth/signin": {
             "post": {
-                "tags": ["SignIn"],
+                "tags": ["Autenticacion"],
                 "description": "Login de un usuario",
-                "parameters": [{
-                    "name": "x-access-token",
-                    "in": "header",
-                    "description": "AccessToken",
-                    "required": true
-                },{
-                    "name": "user",
-                    "in": "body",
-                    "description": "Usuario",
-                    "required": true,
-                    "properties":{
-                        "userName": {
-                            "type": "string",
-                            "uniqueItems": true
-                        },
-                        "userPassword": {
-                            "type": "string"
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "body",
+                        "description": "Usuario",
+                        "required": true,
+                        "properties": {
+                            "userName": {
+                                "type": "string",
+                                "uniqueItems": true
+                            },
+                            "userPassword": {
+                                "type": "string"
+                            }
                         }
                     }
-                }],
+                ],
                 "produces": ["application/json"],
                 "responses": {
                     "200": {
@@ -135,93 +164,150 @@
                 }
             }
         },
-        "/api/test/all":{
+        "/api/userBook/getAllBooks/{id}": {
             "get": {
-                "tags": ["AllAccess"],
-                "description": "Acceso AllAccess",
-                "parameters": [{
-                    "name": "x-access-token",
-                    "in": "header",
-                    "description": "AccessToken",
-                    "required": true
-                },{
-                    "name": "user",
-                    "in": "path",
-                    "description": "Usuario",
-                    "required": true
-                },{
-                    "name": "pass",
-                    "in": "path",
-                    "description": "Password",
-                    "required": true
-                }],
+                "tags": ["Books by user"],
+                "description": "Obtiene los libros de un usuario",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "description": "AccessToken",
+                        "required": true
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del usuario",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
                 "produces": ["application/json"],
                 "responses": {
                     "200": {
-                        "description": "Nuevo usuario es registrado",
+                        "description": "Arreglo de libros de un usuario",
                         "schema": {
-                            "$ref": "#/definitions/UserModel"
+                            "type": "array",
+                            "items":{
+                                "$ref": "#/definitions/Books"
+                            }
                         }
                     }
                 }
             }
         },
-        "/api/test/user":{
+        "/api/userBook/getBookById/{bookId}": {
             "get": {
-                "tags": ["UserAccess"],
-                "description": "Acceso UserAccess",
-                "parameters": [{
-                    "name": "x-access-token",
-                    "in": "header",
-                    "description": "AccessToken",
-                    "required": true
-                },{
-                    "name": "user",
-                    "in": "path",
-                    "description": "Usuario",
-                    "required": true
-                },{
-                    "name": "pass",
-                    "in": "path",
-                    "description": "Password",
-                    "required": true
-                }],
+                "tags": ["Books by user"],
+                "description": "Obtiene los datos de 1 libro de un usuario",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "description": "AccessToken",
+                        "required": true
+                    },
+                    {
+                        "name": "bookId",
+                        "in": "path",
+                        "description": "ID del libro",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
                 "produces": ["application/json"],
                 "responses": {
                     "200": {
-                        "description": "Nuevo usuario es registrado",
+                        "description": "Datos de un libro",
                         "schema": {
-                            "$ref": "#/definitions/UserModel"
+                                "$ref": "#/definitions/Books"
                         }
                     }
                 }
             }
         },
-        "/api/test/admin":{
-            "get": {
-                "tags": ["AdminAccess"],
-                "description": "Acceso AdminAccess",
-                "parameters": [{
-                    "name": "x-access-token",
-                    "in": "header",
-                    "description": "AccessToken",
-                    "required": true
-                },{
-                    "name": "user",
-                    "in": "path",
-                    "description": "Usuario",
-                    "required": true
-                },{
-                    "name": "pass",
-                    "in": "path",
-                    "description": "Password",
-                    "required": true
-                }],
+        "/api/userBook/addBook/{id}": {
+            "post": {
+                "tags": ["Books by user"],
+                "description": "Asocia un libro a un usuario, si no existe en los registros se agrega",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "description": "AccessToken",
+                        "required": true
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Id del usuario",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "book",
+                        "in": "body",
+                        "description": "Datos del libro",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Books"
+                        }
+                    }
+                ],
+                "produces": ["application/json"],
                 "responses": {
                     "200": {
-                        "description": "Nuevo usuario es registrado",
+                        "description": "Arreglo de libros de usuario",
                         "schema": {
-                            "$ref": "#/definitions/UserModel"
+                            "type": "array",
+                            "items":{
+                                "$ref": "#/definitions/Books"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/userBook/deleteBook/{id}": {
+            "delete": {
+                "tags": ["Books by user"],
+                "description": "Borra un libro asociado a un usuario",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "description": "AccessToken",
+                        "required": true
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Id del usuario",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "bookISBN",
+                        "in": "body",
+                        "description": "ISBN del libro",
+                        "required": true,
+                        "properties":{
+                            "bookISBN":{
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Arreglo de libros de usuario",
+                        "schema": {
+                            "type": "array",
+                            "items":{
+                                "$ref": "#/definitions/Books"
+                            }
                         }
                     }
                 }
@@ -229,3 +315,4 @@
         }
     }
 }
+

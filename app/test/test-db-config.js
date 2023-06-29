@@ -32,3 +32,14 @@ module.exports.closeDatabase = async () => {
     isConnected = false;
   }
 };
+
+module.exports.clearDatabase = async () => {
+  if (isConnected) {
+    const collections = mongoose.connection.collections;
+
+    for (const key in collections) {
+      const collection = collections[key];
+      await collection.deleteMany({});
+    }
+  }
+};

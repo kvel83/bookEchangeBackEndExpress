@@ -32,13 +32,14 @@ exports.signup = async(req, res) => {
         await user.save();
         res.status(200).send(user);
     } catch (error) {
-        return res.status(500).json({message: error.message});
+        return error.message;
     }
   };
 
   exports.signin = async (req, res) => {
     try {
         const user = await User.findOne({ userName: req.body.userName }).exec();
+        console.log("usuario en controlador",user);
 
         if (!user) {
             return res.status(404).send({ message: "User Not found." });
@@ -56,7 +57,7 @@ exports.signup = async(req, res) => {
       const role = await Role.findOne({ type: user.role }).exec();
 
       if (!role) {
-        return res.status(404).send({ message: "Role Not found." });
+        res.status(404).send({ message: "Role Not found." });
       }
 
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: 86400 });
