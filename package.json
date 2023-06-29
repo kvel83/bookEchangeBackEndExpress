@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=test jest -i --coverage"
+
   },
   "keywords": [],
   "author": "",
